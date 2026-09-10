@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -9,10 +8,8 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy required for secure sessions on Vercel
 app.set('trust proxy', 1);
 
-// In-memory user database simulation
 const users = [];
 
 app.use(cors());
@@ -30,34 +27,38 @@ app.use(session({
     }
 }));
 
+// Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Explicit routes for HTML pages
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });
 
-// --- AUTHENTICATION ROUTES ---
+app.get('/auth.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+});
+
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// --- AUTHENTICATION & PAYMENT API ROUTES ---
 app.post('/api/v1/auth/signup', async (req, res) => {
     try {
         const { email, password, businessName } = req.body;
-        
         if (!email || !password) {
             return res.status(400).json({ success: false, message: 'Email and password are required.' });
         }
-
         const existingUser = users.find(u => u.email === email);
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
         }
-
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = { id: `usr_${Date.now()}`, email, password: hashedPassword, businessName: businessName || 'My Business' };
-        
         users.push(newUser);
-
         req.session.userId = newUser.id;
         req.session.email = newUser.email;
-
         return res.status(201).json({ success: true, message: 'Account created successfully.', redirect: '/index.html' });
     } catch (error) {
         console.error('Signup error:', error);
@@ -68,20 +69,16 @@ app.post('/api/v1/auth/signup', async (req, res) => {
 app.post('/api/v1/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = users.find(u => u.email === email);
         if (!user) {
             return res.status(400).json({ success: false, message: 'Invalid email or password.' });
         }
-
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Invalid email or password.' });
         }
-
         req.session.userId = user.id;
         req.session.email = user.email;
-
         return res.status(200).json({ success: true, message: 'Login successful.', redirect: '/index.html' });
     } catch (error) {
         console.error('Login error:', error);
@@ -102,21 +99,16 @@ app.post('/api/v1/auth/logout', (req, res) => {
     });
 });
 
-// --- SECURE PAYMENT ROUTE ---
 app.post('/api/v1/create-payment-intent', async (req, res) => {
     if (!req.session || !req.session.userId) {
         return res.status(401).json({ success: false, message: 'Unauthorized. Please log in first.' });
     }
-
     try {
         const { amount, currency } = req.body;
-
         if (!amount || !currency) {
             return res.status(400).json({ success: false, message: 'Invalid payment parameters.' });
         }
-
         const transactionId = `txn_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-        
         return res.status(200).json({
             success: true,
             transactionId,
