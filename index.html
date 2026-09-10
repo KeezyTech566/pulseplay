@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulsePay — Instant Global Checkout</title>
+    <!-- Tailwind CSS via CDN for ultra-fast styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-900 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Background Glow Effects -->
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-10 right-10 w-80 h-80 bg-violet-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md relative z-10">
+        <!-- Brand Header -->
+        <div class="text-center mb-6 relative">
+            <button onclick="handleLogout()" class="absolute right-0 top-0 text-xs text-slate-400 hover:text-white bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 transition">Logout</button>
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white font-bold text-xl shadow-lg shadow-indigo-500/30 mb-2">P</div>
+            <h1 class="text-2xl font-bold tracking-tight text-white">PulsePay Checkout</h1>
+            <p class="text-xs text-slate-400 mt-1">Frictionless, secure, instant settlement engine</p>
+        </div>
+
+        <!-- Checkout Card -->
+        <div class="glass-card rounded-3xl p-6 shadow-2xl shadow-black/40">
+            
+            <!-- Order Summary Pill -->
+            <div class="flex items-center justify-between p-4 bg-slate-100 rounded-2xl mb-6">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Due</p>
+                    <p class="text-2xl font-bold text-slate-900" id="display-amount">$150.00</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Live Route
+                    </span>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Zero Redirect Fee</p>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <form id="payment-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Cardholder Email</label>
+                    <input type="email" id="email" required placeholder="john@example.com" 
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition bg-slate-50">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Card Number</label>
+                    <div class="relative">
+                        <input type="text" id="card-number" required placeholder="4242 •••• •••• 4242" maxlength="19"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition bg-slate-50 font-mono">
+                        <div class="absolute right-3 top-3.5 flex items-center space-x-1">
+                            <div class="w-6 h-4 bg-indigo-600 rounded-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Expiry Date</label>
+                        <input type="text" id="card-expiry" required placeholder="MM/YY" maxlength="5"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition bg-slate-50 font-mono text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">CVV Code</label>
+                        <input type="password" id="card-cvv" required placeholder="123" maxlength="4"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition bg-slate-50 font-mono text-center">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="pay-button" 
+                    class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2">
+                    <span id="button-text">Pay $150.00 Instantly</span>
+                    <svg id="spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Success State Overlay (Hidden by default) -->
+            <div id="success-view" class="hidden text-center py-6 space-y-4">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+                <h3 class="text-xl font-bold text-slate-900">Payment Successful!</h3>
+                <p class="text-xs text-slate-500">Transaction verified and settled instantly through PulsePay smart network.</p>
+                <div class="bg-slate-50 p-3 rounded-xl text-left text-xs space-y-1 font-mono">
+                    <p class="text-slate-400">ID: <span id="res-txn" class="text-slate-700"></span></p>
+                    <p class="text-slate-400">Time: <span id="res-time" class="text-slate-700"></span></p>
+                </div>
+                <button onclick="resetCheckout()" class="w-full bg-slate-900 text-white py-3 rounded-xl text-xs font-semibold hover:bg-slate-800 transition">Make Another Payment</button>
+            </div>
+
+            <!-- Footer Trust Badge -->
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>🔒 256-Bit Encrypted</span>
+                <span>Powered by PulsePay Core</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Session verification check on dashboard load
+        async function checkAuthSession() {
+            try {
+                const res = await fetch('/api/v1/auth/session');
+                const data = await res.json();
+                if (!data.isAuthenticated) {
+                    window.location.href = '/auth.html';
+                } else {
+                    console.log('Logged in as:', data.email);
+                }
+            } catch (e) {
+                window.location.href = '/auth.html';
+            }
+        }
+        checkAuthSession();
+
+        // Logout handler function
+        async function handleLogout() {
+            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            window.location.href = '/auth.html';
+        }
+
+        // Formatting helpers
+        const cardNumberInput = document.getElementById('card-number');
+        cardNumberInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 16);
+            value = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = value;
+        });
+
+        const cardExpiryInput = document.getElementById('card-expiry');
+        cardExpiryInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            if (value.length >= 3) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            e.target.value = value;
+        });
+
+        // Form submission handler
+        const form = document.getElementById('payment-form');
+        const payButton = document.getElementById('pay-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        const successView = document.getElementById('success-view');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Toggle loading state
+            payButton.disabled = true;
+            buttonText.textContent = 'Processing Securely...';
+            spinner.classList.remove('hidden');
+
+            const payload = {
+                amount: 150.00,
+                currency: 'USD',
+                customerEmail: document.getElementById('email').value,
+                paymentMethod: 'card'
+            };
+
+            try {
+                const response = await fetch('/api/v1/create-payment-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    form.classList.add('hidden');
+                    document.getElementById('display-amount').parentElement.parentElement.classList.add('hidden');
+                    document.getElementById('res-txn').textContent = result.transactionId;
+                    document.getElementById('res-time').textContent = new Date(result.timestamp).toLocaleTimeString();
+                    successView.classList.remove('hidden');
+                } else {
+                    alert('Payment failed: ' + result.message);
+                    resetButton();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error connecting to PulsePay engine.');
+                resetButton();
+            }
+        });
+
+        function resetButton() {
+            payButton.disabled = false;
+            buttonText.textContent = 'Pay $150.00 Instantly';
+            spinner.classList.add('hidden');
+        }
+
+        function resetCheckout() {
+            successView.classList.add('hidden');
+            form.classList.remove('hidden');
+            document.getElementById('display-amount').parentElement.parentElement.classList.remove('hidden');
+            form.reset();
+            resetButton();
+        }
+    </script>
+</body>
+</html>
